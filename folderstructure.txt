@@ -1,0 +1,25 @@
+FitLinkBackend/
+    │
+    ├── config/
+    │   └── db.js
+    │
+    ├── controllers/
+    │   └── authController.js
+    │
+    ├── middleware/
+    │   └── authMiddleware.js
+    │
+    ├── models/
+    │   └── User.js
+    │
+    ├── routes/
+    │   └── authRoutes.js
+    │
+    ├── utils/
+    │   └── generateToken.js
+    │
+    ├── .env
+    ├── .env.example
+    ├── .gitignore
+    ├── package.json
+    └── server.js
