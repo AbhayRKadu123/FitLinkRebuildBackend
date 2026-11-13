@@ -75,22 +75,29 @@ const routineSchema = new mongoose.Schema(
       type: String,
       default: '3 days',
     },
+    category: {
+      type: String,
+      enum: ['Strength', 'Cardio', 'Flexibility'],
+    default: 'Strength',
 
-    exercises: {
-      type: [routineExerciseSchema],
-      validate: {
-        validator: value => value.length > 0,
-        message: 'A routine must contain at least one exercise',
-      },
     },
+  
+  exercises: {
 
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+  type: [routineExerciseSchema],
+  validate: {
+    validator: value => value.length > 0,
+    message: 'A routine must contain at least one exercise',
   },
-  {
-    timestamps: true,
+},
+
+  isActive: {
+  type: Boolean,
+  default: true,
+},
+  },
+{
+  timestamps: true,
   }
 );
 

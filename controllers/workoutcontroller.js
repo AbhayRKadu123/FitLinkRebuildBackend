@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 
 import Routine from '../models/routineExerciseSchema.js';
 import Exercise from '../models/Exercises.js';
+import GetUserDetails from '../utils/GetUserDetails.js';
 // import mongoose from 'mongoose';
 
 
@@ -99,15 +100,24 @@ export const deleteRoutine = async (req, res) => {
 
 export const getAllRoutines = async (req, res) => {
   try {
-    console.log('Fetching routines for user...');
+    console.log('Fetching routines for user...', req.user);
+    let { Category } = req.query;
+    let userDetails = await GetUserDetails(req.user.id);
+    console.log('User details fetched successfully:', userDetails);
+    if (Category) {
+      Category = Category.trim();
 
+    }
+    if (Category == 'All') {
+      Category = '';
+    }
     const userId = new mongoose.Types.ObjectId(
-      '672a1b2c3d4e5f6789012345'
+      req.user.id
     );
 
     const routines = await Routine.aggregate([
       {
-        $match: { userId },
+        $match: { userId, goal: { $regex: Category, $options: 'i' } },
       },
       {
         $sort: { createdAt: -1 },

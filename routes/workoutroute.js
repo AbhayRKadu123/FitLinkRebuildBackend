@@ -1,6 +1,6 @@
 
 import express from 'express';
-
+import authMiddleware from '../middleware/authMiddleware.js';
 import { createRoutine } from '../controllers/workoutcontroller.js'
 import { getExercises } from '../controllers/workoutcontroller.js';
 import {getAllRoutines} from '../controllers/workoutcontroller.js';
@@ -11,11 +11,12 @@ import {deleteRoutine,getRoutineById,
 const routineRoutes = express.Router();
 
 // CREATE NEW ROUTINE
-routineRoutes.post('/newroutine', createRoutine);
-routineRoutes.get('/getAllRoutines', getAllRoutines);
-routineRoutes.delete('/deleteRoutine/:routineId', deleteRoutine);
+routineRoutes.post('/newroutine',authMiddleware, createRoutine);
+routineRoutes.get('/getAllRoutines',authMiddleware, getAllRoutines);
+routineRoutes.delete('/deleteRoutine/:routineId', authMiddleware, deleteRoutine);
 routineRoutes.get(
     '/getRoutineById/:routineId',
+    authMiddleware,
   
     getRoutineById
 );
@@ -23,11 +24,12 @@ routineRoutes.get(
 // PUT: Update routine
 routineRoutes.put(
     '/updateRoutine/:routineId',
+    authMiddleware,
     
     updateRoutine
 );
 
 
 
-routineRoutes.get('/getExercises', getExercises);
+routineRoutes.get('/getExercises', authMiddleware, getExercises);
 export default routineRoutes;
