@@ -4,6 +4,8 @@ import mongoose from 'mongoose';
 import Routine from '../models/routineExerciseSchema.js';
 import Exercise from '../models/Exercises.js';
 import GetUserDetails from '../utils/GetUserDetails.js';
+import WorkoutSession from '../models/WorkoutSession.js';
+
 // import mongoose from 'mongoose';
 
 
@@ -97,6 +99,241 @@ export const deleteRoutine = async (req, res) => {
     });
   }
 };
+
+// import mongoose from 'mongoose';
+export const getWorkoutByRoutineId = async (req, res) => {
+  try {
+    let { routineId } = req.params;
+
+    console.log('Fetching workout for routine:', routineId);
+
+    // Validate routine ID
+    if (routineId) {
+      routineId = new mongoose.Types.ObjectId(routineId);
+
+    }
+    if (!mongoose.Types.ObjectId.isValid(routineId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid routine ID',
+      });
+    }
+
+    // Find routine and populate exercises
+   const routine = await Routine.findOne({
+  _id: routineId,
+  // userId: req.user.id,
+}).populate({
+  path: 'exercises.exerciseId',
+  model: 'Exercise',
+});
+    console.log('Routine fetched successfully:', routine?.exercises);
+
+    if (!routine) {
+      return res.status(404).json({
+        success: false,
+        message: 'Routine not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Workout fetched successfully',
+      data: routine,
+    });
+
+  } catch (error) {
+    console.error('Get Workout Error:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch workout',
+      error: error.message,
+    });
+  }
+};
+
+export const logWorkout = async (req, res) => {
+  try {
+    console.log('Saving workout session...', req.body);
+
+    // Get authenticated user ID from JWT middleware
+    let userId = req.user.id;
+    userId = new mongoose.Types.ObjectId(
+      userId
+    );
+   let{
+      routineId,
+      routineName,
+      date,
+      startTime,
+      endTime,
+      durationMinutes,
+      exercises,
+      notes,
+    } = req.body;
+
+    // Validate required fields
+    if (!routineName || !routineName.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Routine name is required',
+      });
+    }
+
+    if (!Array.isArray(exercises) || exercises.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one exercise is required',
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid authenticated user',
+      });
+    }
+    if (routineId) {
+      routineId = new mongoose.Types.ObjectId(routineId);
+    }
+    // Validate routine ID if supplied
+    if (
+      routineId &&
+      !mongoose.Types.ObjectId.isValid(routineId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid routine ID',
+      });
+    }
+
+    // Validate and prepare exercises
+    let totalSets = 0;
+console.log('Received exercises:', JSON.stringify(exercises, null, 2));
+    const formattedExercises = exercises.map((exercise) => {
+      if (
+        !exercise.exerciseId ||
+        !mongoose.Types.ObjectId.isValid(exercise.exerciseId)
+      ) {
+        throw new Error(
+          `Invalid exercise ID for ${exercise.exerciseName || 'exercise'}`
+        );
+      }
+
+      if (
+        !exercise.exerciseName ||
+        !Array.isArray(exercise.sets) ||
+        exercise.sets.length === 0
+      ) {
+        throw new Error(
+          `Invalid exercise data for ${exercise.exerciseName || 'exercise'}`
+        );
+      }
+
+      totalSets += exercise.sets.length;
+
+      return {
+        exerciseId: exercise.exerciseId,
+        exerciseName: exercise.exerciseName,
+        muscleGroup: exercise.muscleGroup || '',
+
+        sets: exercise.sets.map((set, index) => {
+          const weight = Number(set.weight);
+          const reps = Number(set.reps);
+
+          if (
+            !Number.isFinite(weight) ||
+            weight < 0 ||
+            !Number.isInteger(reps) ||
+            reps <= 0
+          ) {
+            throw new Error(
+              `Invalid weight or reps in ${exercise.exerciseName}, Set ${index + 1}`
+            );
+          }
+
+          return {
+            setNumber: index + 1,
+            weight,
+            reps,
+            isCompleted: set.isCompleted ?? true,
+          };
+        }),
+      };
+    });
+
+    // Calculate duration when endTime is provided
+    const parsedStartTime = startTime
+      ? new Date(startTime)
+      : new Date();
+
+    const parsedEndTime = endTime
+      ? new Date(endTime)
+      : null;
+
+    if (
+      Number.isNaN(parsedStartTime.getTime()) ||
+      (parsedEndTime && Number.isNaN(parsedEndTime.getTime()))
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid workout time',
+      });
+    }
+
+    let calculatedDuration = Number(durationMinutes) || 0;
+
+    if (parsedEndTime) {
+      calculatedDuration = Math.max(
+        0,
+        Math.round(
+          (parsedEndTime - parsedStartTime) / 60000
+        )
+      );
+    }
+
+    // Create workout session
+    const newSession = await WorkoutSession.create({
+      userId,
+
+      routineId: routineId || null,
+      routineName: routineName.trim(),
+
+      date: date ? new Date(date) : new Date(),
+      startTime: parsedStartTime,
+      endTime: parsedEndTime,
+
+      durationMinutes: calculatedDuration,
+
+      exercises: formattedExercises,
+
+      notes: notes || '',
+
+      totalSets,
+
+      status: 'completed',
+    });
+
+    console.log('Workout session saved:', newSession._id);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Workout session saved successfully',
+
+      data: newSession,
+    });
+
+  } catch (error) {
+    console.error('Log Workout Error:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to save workout session',
+    });
+  }
+};
+
 
 export const getAllRoutines = async (req, res) => {
   try {
@@ -265,9 +502,8 @@ export const createRoutine = async (req, res) => {
 
     // Hardcoded user ID
     const userId = new mongoose.Types.ObjectId(
-      '672a1b2c3d4e5f6789012345'
+      req.user.id
     );
-
     // Validate title
     if (!title || !title.trim()) {
       return res.status(400).json({
@@ -349,7 +585,7 @@ export const getRoutineById = async (req, res) => {
 
     // const userId = req.user.id;
     const userId = new mongoose.Types.ObjectId(
-      '672a1b2c3d4e5f6789012345'
+      req.user.id
     );
 
     // Validate routine ID
@@ -404,7 +640,7 @@ export const updateRoutine = async (req, res) => {
 
     // const userId = req.user.id;
     const userId = new mongoose.Types.ObjectId(
-      '672a1b2c3d4e5f6789012345'
+      req.user.id
     );
 
     const {
