@@ -9,7 +9,12 @@ import {getWorkoutByRoutineId} from '../controllers/workoutcontroller.js';
 import {deleteRoutine,getRoutineById,
     updateRoutine,
 } from '../controllers/workoutcontroller.js';
+import {updateWorkoutSession} from '../controllers/workoutcontroller.js';
+import {createWorkoutSession} from '../controllers/workoutcontroller.js';
+import { getWorkoutSessionById } from '../controllers/workoutcontroller.js';
 // import authMiddleware from "../middleware/"
+import {getWorkoutHistory} from '../controllers/workoutcontroller.js';
+import {getTodayWorkoutSession} from '../controllers/workoutcontroller.js';
 const routineRoutes = express.Router();
 
 // CREATE NEW ROUTINE
@@ -24,8 +29,18 @@ routineRoutes.get(
   
     getRoutineById
 );
-
+routineRoutes.get('/history', authMiddleware, getWorkoutHistory);
 // PUT: Update routine
+routineRoutes.get(
+  '/today/:routineId',
+  authMiddleware,
+  getTodayWorkoutSession
+);
+routineRoutes.put('/:sessionId', authMiddleware, updateWorkoutSession);
+routineRoutes.get('/:sessionId', authMiddleware, getWorkoutSessionById);
+
+// getWorkoutSessionById
+// routineRoutes.post('/log', verifyToken, createWorkoutSession);
 routineRoutes.put(
     '/updateRoutine/:routineId',
     authMiddleware,
