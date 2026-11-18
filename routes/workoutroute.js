@@ -18,6 +18,8 @@ import {getTodayWorkoutSession} from '../controllers/workoutcontroller.js';
 const routineRoutes = express.Router();
 
 // CREATE NEW ROUTINE
+routineRoutes.get('/getExercises', authMiddleware, getExercises);
+
 routineRoutes.post('/log', authMiddleware, logWorkout);
 routineRoutes.post('/newroutine',authMiddleware, createRoutine);
 routineRoutes.get('/getAllRoutines',authMiddleware, getAllRoutines);
@@ -50,5 +52,4 @@ routineRoutes.put(
 
 
 
-routineRoutes.get('/getExercises', authMiddleware, getExercises);
 export default routineRoutes;
