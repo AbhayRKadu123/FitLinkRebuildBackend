@@ -9,6 +9,7 @@ import {getWorkoutByRoutineId} from '../controllers/workoutcontroller.js';
 import {deleteRoutine,getRoutineById,
     updateRoutine,
 } from '../controllers/workoutcontroller.js';
+import  {  getPreviousWorkoutByRoutineId} from "../controllers/workoutcontroller.js"
 import {updateWorkoutSession} from '../controllers/workoutcontroller.js';
 import {createWorkoutSession} from '../controllers/workoutcontroller.js';
 import { getWorkoutSessionById } from '../controllers/workoutcontroller.js';
@@ -30,6 +31,11 @@ routineRoutes.get(
     authMiddleware,
   
     getRoutineById
+);
+routineRoutes.get(
+  '/previous/:routineId',
+  authMiddleware,
+  getPreviousWorkoutByRoutineId
 );
 routineRoutes.get('/history', authMiddleware, getWorkoutHistory);
 // PUT: Update routine

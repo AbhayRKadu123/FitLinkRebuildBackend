@@ -101,6 +101,69 @@ export const deleteRoutine = async (req, res) => {
 };
 
 // import mongoose from 'mongoose';
+export const getPreviousWorkoutByRoutineId = async (req, res) => {
+  try {
+    const { routineId } = req.params;
+    const userId = req.user.id;
+
+    console.log('Fetching previous workout for routine:', routineId);
+
+    if (!mongoose.Types.ObjectId.isValid(routineId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid routine ID',
+      });
+    }
+
+    // Calculate start of today in India (IST)
+    const now = new Date();
+    const indiaOffset = 330 * 60 * 1000;
+
+    const indiaNow = new Date(now.getTime() + indiaOffset);
+
+    const startOfToday = new Date(
+      Date.UTC(
+        indiaNow.getUTCFullYear(),
+        indiaNow.getUTCMonth(),
+        indiaNow.getUTCDate()
+      ) - indiaOffset
+    );
+
+    // Find the latest completed session before today
+    const previousWorkout = await WorkoutSession.findOne({
+      userId,
+      routineId,
+      status: 'completed',
+      date: { $lt: startOfToday },
+    }).sort({
+      date: -1,
+      createdAt: -1,
+    });
+
+    if (!previousWorkout) {
+      return res.status(200).json({
+        success: true,
+        message: 'No previous workout found',
+        data: null,
+      });
+    }
+console.log("previousWorkout is ",previousWorkout)
+    return res.status(200).json({
+      success: true,
+      message: 'Previous workout fetched successfully',
+      data: previousWorkout,
+    });
+
+  } catch (error) {
+    console.error('Previous workout error:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch previous workout',
+      error: error.message,
+    });
+  }
+};
 export const getWorkoutByRoutineId = async (req, res) => {
   try {
     let { routineId } = req.params;
