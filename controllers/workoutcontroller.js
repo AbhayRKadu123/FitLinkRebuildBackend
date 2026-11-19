@@ -985,7 +985,7 @@ export const getExercises = async (req, res) => {
 
     const exercises = await Exercise.aggregate(Pipeline);
 
-    // console.log('Exercises fetched successfully:', exercises);
+    console.log('Exercises fetched successfully:', exercises);
 
     return res.status(200).json({
       success: true,
