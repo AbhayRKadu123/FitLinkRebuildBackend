@@ -1003,6 +1003,37 @@ export const getExercises = async (req, res) => {
     });
   }
 };
+export const deleteWorkoutHistory = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user.id;
+
+    const deletedSession = await WorkoutSession.findOneAndDelete({
+      _id: sessionId,
+      userId: userId,
+    });
+
+    if (!deletedSession) {
+      return res.status(404).json({
+        success: false,
+        message: "Workout history not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Workout history deleted successfully",
+    });
+
+  } catch (error) {
+    console.log("Delete workout history error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
 
 // CREATE NEW ROUTINE
 export const createRoutine = async (req, res) => {

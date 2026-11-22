@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import routineRoutes from './routes/workoutroute.js';
-
+import userRoutes from './routes/UserRouter.js';
 dotenv.config();
 
 const app = express();
@@ -18,8 +18,10 @@ app.use(express.json());
 app.get('/', async (req, res) => {
     res.status(200).send('FitLink Backend is running!');
 });
+app.use('/api/userinfo', userRoutes);
 
 app.use('/api/routines', routineRoutes);
+
 app.use('/api/auth', authRoutes);
 // Server configuration
 const PORT = process.env.PORT || 5000;

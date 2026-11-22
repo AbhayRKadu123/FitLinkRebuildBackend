@@ -1,10 +1,12 @@
 import mongoose from 'mongoose';
 import User from '../models/User.js';
 import WorkoutSession from '../models/WorkoutSession.js';
-
+import GetUserDetails from '../utils/GetUserDetails.js';
+// import User from '../models/User.js';
 export const getProfileData = async (req, res) => {
   try {
     const userId = req.user.id;
+    console.log("GetUserDetail",GetUserDetail)
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({
@@ -100,6 +102,34 @@ export const getProfileData = async (req, res) => {
       success: false,
       message: 'Failed to fetch profile data',
       error: error.message,
+    });
+  }
+};
+export const GetUserDetail = async (req, res) => {
+  try {
+    const userDetails = await GetUserDetails(req.user.id);
+    console.log("get user details",userDetails)
+
+    if (!userDetails) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User details fetched successfully",
+      user: userDetails,
+    });
+
+  } catch (err) {
+    console.error("GetUserDetail Error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
     });
   }
 };
