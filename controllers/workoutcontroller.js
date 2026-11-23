@@ -852,6 +852,7 @@ export const logWorkout = async (req, res) => {
 // };
 
 
+
 export const getAllRoutines = async (req, res) => {
   try {
     console.log('Fetching routines for user...', req.user);
