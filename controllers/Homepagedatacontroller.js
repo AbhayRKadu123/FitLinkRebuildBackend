@@ -145,3 +145,89 @@ export const weeklyActivity = async (req, res) => {
     });
   }
 };
+
+// import WorkoutSession from '../models/WorkoutSession.js';
+
+export const getRecentWorkouts = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get latest 3 completed workouts
+    const workouts = await WorkoutSession.find({
+      userId,
+      status: 'completed',
+    })
+      .sort({ date: -1 })
+      .limit(3)
+      .select('routineName date durationMinutes exercises');
+
+    const recentWorkouts = workouts.map(workout => {
+      // Get unique muscle groups
+      const muscleGroups = [
+        ...new Set(
+          workout.exercises
+            .map(exercise => exercise.muscleGroup)
+            .filter(Boolean)
+        ),
+      ];
+
+      // Convert date to IST
+      const workoutDate = new Date(workout.date);
+      const istDate = new Date(
+        workoutDate.getTime() + (5 * 60 + 30) * 60 * 1000
+      );
+
+      const today = new Date();
+      const todayIST = new Date(
+        today.getTime() + (5 * 60 + 30) * 60 * 1000
+      );
+
+      const todayString = todayIST.toISOString().split('T')[0];
+      const workoutDateString = istDate.toISOString().split('T')[0];
+
+      const yesterday = new Date(todayIST);
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+      const yesterdayString = yesterday.toISOString().split('T')[0];
+
+      let dateLabel;
+
+      if (workoutDateString === todayString) {
+        dateLabel = 'Today';
+      } else if (workoutDateString === yesterdayString) {
+        dateLabel = 'Yesterday';
+      } else {
+        dateLabel = istDate.toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          timeZone: 'UTC',
+        });
+      }
+
+      return {
+        id: workout._id,
+        title: workout.routineName,
+        details: muscleGroups.length
+          ? muscleGroups.join(', ')
+          : 'Workout',
+        date: dateLabel,
+        duration: `${workout.durationMinutes || 0} min`,
+        icon: 'barbell-outline',
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Recent workouts fetched successfully',
+      data: recentWorkouts,
+    });
+
+  } catch (error) {
+    console.error('Get recent workouts error:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch recent workouts',
+      error: error.message,
+    });
+  }
+};
